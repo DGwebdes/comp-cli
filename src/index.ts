@@ -20,12 +20,12 @@ const WELCOME_MESSAGE = chalk.bgBlack.italic(
 );
 const OUTPUT: string = "./output";
 
-async function welcome() {
+function welcome() {
     const intro = chalk.blue.bold(WELCOME_MESSAGE);
     console.log(intro);
 }
 
-async function howToUse() {
+function howToUse() {
     const note = chalk.red.italic(`If output source does't exist. Create one.`);
     const howTo = chalk.green(`
         Usage > ./directory_path
@@ -102,6 +102,6 @@ async function compressImages(argInput: string) {
 }
 
 console.clear();
-await welcome();
-await howToUse();
+welcome();
+howToUse();
 await inputSource();
