@@ -5,14 +5,16 @@ import fs from "fs";
 import readline from "readline";
 import sharp from "sharp";
 import chalk from "chalk";
+import { createSpinner } from "nanospinner";
 
 const rl = readline.createInterface({
     input: process.stdin,
     output: process.stdout,
 });
+const spinner = createSpinner("Compressing");
 
 const EXTENSIONS = [".jpeg", ".jpg", ".png"];
-const ACCEPTED_FORMATS = chalk.bgRed(`Accepted formats: JPEG, JPG, PNG`);
+const ACCEPTED_FORMATS = chalk.bgBlue(`Accepted formats: JPEG, JPG, PNG`);
 const WELCOME_MESSAGE = chalk.bgBlack.italic(
     `Image.* to Image.webp Compressor. \n`
 );
@@ -26,8 +28,10 @@ async function welcome() {
 async function howToUse() {
     const note = chalk.red.italic(`If output source does't exist. Create one.`);
     const howTo = chalk.green(`
-        Usage > ./directory_path 
-        outputs to 'output/' directory
+        Usage > ./directory_path
+        Comp-cli will always compress the images from your project public directory 
+        Comp-cli outputs its results to 'output/' directory on your project root
+        ${ACCEPTED_FORMATS}
         \n
         ${note}
         `);
@@ -36,7 +40,8 @@ async function howToUse() {
 // TODO: Validate user input
 async function inputSource() {
     rl.question("Source of Images\n ", (inputDir) => {
-        const input = inputDir.trim();
+        const input = path.resolve(process.cwd(), inputDir.trim());
+        console.log(chalk.red(input));
         compressImages(input);
     });
 }
@@ -65,6 +70,7 @@ async function compressImages(argInput: string) {
         if (!fs.existsSync(OUTPUT)) {
             fs.mkdirSync(OUTPUT);
         }
+        spinner.start();
         const jobs = files
             .filter((extensions) =>
                 EXTENSIONS.includes(path.extname(extensions))
@@ -81,12 +87,15 @@ async function compressImages(argInput: string) {
                     .toFormat("webp", { quality: 80 })
                     .toFile(path.join(OUTPUT, `${name}.webp`));
             });
+
         await Promise.all(jobs);
+        spinner.success();
+        console.log(chalk.green(`Your files have been compressed.`));
     } catch (error) {
+        spinner.error();
         console.error(chalk.red(`Sorry, something went wrong ${error}`));
         process.exit(1);
     } finally {
-        console.log(chalk.green(`Your file have been compressed.`));
         rl.close();
     }
     // Returns compressed images to either the directory destination indicated on the output argument or the same input directory if no output is given
