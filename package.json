@@ -1,0 +1,21 @@
+{
+    "name": "compressor-cli",
+    "version": "1.0.0",
+    "description": "",
+    "license": "ISC",
+    "author": "dielan",
+    "type": "module",
+    "main": "index.ts",
+    "scripts": {
+        "dev": "node src/index.ts",
+        "build": "npx tsc"
+    },
+    "devDependencies": {
+        "@types/node": "^25.0.2",
+        "ts-node": "^10.9.2",
+        "typescript": "^5.9.3"
+    },
+    "dependencies": {
+        "sharp": "^0.34.5"
+    }
+}
