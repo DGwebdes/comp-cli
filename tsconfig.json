@@ -42,5 +42,7 @@
         "skipLibCheck": true,
         "esModuleInterop": true
         // "allowImportingTsExtensions": true
-    }
+    },
+    "include": ["src/**/*"],
+    "exclude": ["tests/**/*"]
 }

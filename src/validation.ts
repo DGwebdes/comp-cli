@@ -55,7 +55,7 @@ function validatePath(resolvedPath: string): ValidationResult {
         if (!fs.existsSync(resolvedPath)) {
             return {
                 isValid: false,
-                error: `Path does not exist. ${resolvedPath}`,
+                error: `Path does not exist.`,
             };
         }
 
