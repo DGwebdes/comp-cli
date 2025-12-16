@@ -21,7 +21,7 @@ npm install -g compressor-cli
 
 ### Development
 ```bash
-git clone <your-repo>
+git clone <repo-url>
 cd compressor-cli
 npm install
 npm run build
@@ -56,6 +56,9 @@ If no arguments are provided, comp-cli starts in interactive mode:
 comp-cli
 # Follow the prompts to enter your source directory
 ```
+### Interactive Options
+Right now interactive mode only accepts the path directory to the images to be compressed.
+All other values fallback to default values. See below.
 
 ## Options
 
@@ -131,4 +134,4 @@ ISC
 
 ## Author
 
-dielan
+Dielan Garve

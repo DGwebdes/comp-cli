@@ -84,9 +84,17 @@ function start(config: CompressConfig) {
 async function inputSource() {
     welcome();
     howToUse();
-    rl.question("Source of Images\n > ", (inputDir) => {
-        start({ input: inputDir });
-    });
+    rl.question(
+        "Source of Images\n > ",
+        (
+            inputDir: string,
+            outputDir?: string,
+            Iwidth?: number,
+            Iquality?: number
+        ) => {
+            start({ input: inputDir });
+        }
+    );
 }
 
 /**
