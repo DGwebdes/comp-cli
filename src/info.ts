@@ -21,7 +21,7 @@ function howToUse() {
         i.e: comp-cli ./public -w 1200 -q 75 -o ./public/compressed
 
         About comp-cli tool:
-        Comp-cli will always compress the images all images from the provided directory to the given dimensions and quality value.
+        Comp-cli will always compress all the images from the provided directory to the given dimensions and quality value.
         comp-cli takes only a few selection of images extensions.
         Comp-cli outputs its results to 'output/' directory on your project root
         
