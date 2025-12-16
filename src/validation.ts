@@ -160,7 +160,7 @@ function getArgValue(
             const value = parseInt(args[index + 1]!);
             if (isNaN(value)) {
                 loggerError(`❌ Invalid value for ${flag}: must be a number`);
-                process.exit(1);
+                throw new Error();
             }
             return value;
         }

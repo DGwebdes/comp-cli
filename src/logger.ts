@@ -1,10 +1,8 @@
 import chalk from "chalk";
 
 export function loggerSuccess(arg: string) {
-    const message = chalk.bgYellow.black(arg);
-    console.log(message);
+    console.log(chalk.bgYellow.black(arg));
 }
 export function loggerError(arg: string) {
-    const message = chalk.bgRed.black(arg);
-    console.log(message);
+    console.log(chalk.bgRed.black(arg));
 }

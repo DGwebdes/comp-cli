@@ -3,7 +3,7 @@
     "version": "1.0.0",
     "description": "",
     "license": "ISC",
-    "author": "dielan",
+    "author": "Dielan",
     "type": "module",
     "main": "dist/index.ts",
     "bin": {

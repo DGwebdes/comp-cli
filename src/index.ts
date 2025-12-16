@@ -19,6 +19,8 @@ const QUALITY_DEFAULT = 80;
 const WIDTH_DEFAULT = 1080;
 const OUTPUT_DEFAULT = "./output";
 
+type InitResult = "ok" | "help" | "error";
+
 interface CompressConfig {
     input: string;
     output?: string;
@@ -29,11 +31,11 @@ interface CompressConfig {
 /**
  * *Initiates the application looking for parameters
  */
-function init() {
+export async function init(): Promise<InitResult> {
     if (args.includes("-h") || args.includes("--help")) {
         welcome();
         howToUse();
-        process.exit(0);
+        return "help";
     }
 
     const config: CompressConfig = {
@@ -45,10 +47,11 @@ function init() {
 
     if (!config.input || config.input.startsWith("-")) {
         loggerError(`❌ Usage: comp-cli <input-dir> [options]`);
-        process.exit(1);
+        return "error";
     }
 
-    start(config);
+    await start(config);
+    return "ok";
 }
 
 /**
@@ -56,22 +59,22 @@ function init() {
  * @param SourceDirectory
  * @returns
  */
-function start(config: CompressConfig) {
+async function start(config: CompressConfig) {
     const validation = validateSourceDir(config.input, EXTENSIONS);
 
     if (!validation.isValid) {
         loggerError(`❌ ${validation.error}`);
         rl.close();
-        return;
+        throw new Error(validation.error);
     }
 
     if (validation.error) {
         loggerSuccess(`✅ ${validation.error}`);
     }
     const input = path.resolve(process.cwd(), config.input.trim());
-    compressImages({ ...config, input })
+    await compressImages({ ...config, input })
         .catch((err) => {
-            process.exit(1);
+            throw err;
         })
         .finally(() => {
             rl.close();
@@ -84,17 +87,11 @@ function start(config: CompressConfig) {
 async function inputSource() {
     welcome();
     howToUse();
-    rl.question(
-        "Source of Images\n > ",
-        (
-            inputDir: string,
-            outputDir?: string,
-            Iwidth?: number,
-            Iquality?: number
-        ) => {
-            start({ input: inputDir });
-        }
-    );
+    rl.question("Source of Images\n > ", (inputDir: string) => {
+        start({ input: inputDir }).catch(() => {
+            process.exitCode = 1;
+        });
+    });
 }
 
 /**
@@ -102,8 +99,7 @@ async function inputSource() {
  * * Compresses all the images within the provided directory
  * @param ImagesToBeCompressedSource
  */
-async function compressImages(config: CompressConfig) {
-    // Takes the images from the directory indicated in the first argument
+export async function compressImages(config: CompressConfig) {
     try {
         let files = fs.readdirSync(`${config.input}`);
         let dirOutput = config.output ? config.output : OUTPUT_DEFAULT;
@@ -113,27 +109,27 @@ async function compressImages(config: CompressConfig) {
         if (!fs.existsSync(dirOutput)) {
             fs.mkdirSync(dirOutput);
         }
+        const filtered = files.filter((file) =>
+            EXTENSIONS.includes(path.extname(file).toLowerCase())
+        );
         spinner.start();
         let completed = 0;
-        const TOTAL = files.filter((file) =>
-            EXTENSIONS.includes(path.extname(file).toLocaleLowerCase())
-        ).length;
-        const jobs = files
-            .filter((file) =>
-                EXTENSIONS.includes(path.extname(file).toLowerCase())
-            )
-            .map((file) => {
-                const { name, ext } = path.parse(file);
-                completed++;
-                spinner.update({ text: `Compressing ${completed}/${TOTAL}` });
+        const TOTAL = filtered.length;
+        const jobs = filtered.map((file) => {
+            const { name } = path.parse(file);
+            const image = sharp(path.join(config.input, file));
 
-                const image = sharp(path.join(config.input, file));
-
-                return image
-                    .resize({ width: width })
-                    .toFormat("webp", { quality: quality })
-                    .toFile(path.join(dirOutput, `${name}.webp`));
-            });
+            return image
+                .resize({ width: width })
+                .toFormat("webp", { quality: quality })
+                .toFile(path.join(dirOutput, `${name}.webp`))
+                .then(() => {
+                    completed++;
+                    spinner.update({
+                        text: `Compressing ${completed}/${TOTAL}`,
+                    });
+                });
+        });
 
         await Promise.all(jobs);
         spinner.success();
@@ -160,9 +156,21 @@ async function compressImages(config: CompressConfig) {
 /**
  * *Initiates the program, if not params are provided it enter Interactive Mode
  */
-console.clear();
-if (args.length !== 0) {
-    init();
-} else {
-    await inputSource();
+try {
+    if (args.length !== 0) {
+        const result = await init();
+        if (result === "error") {
+            process.exitCode = 1;
+        } else if (result === "help") {
+            process.exitCode = 0; // Success for help
+        }
+    } else {
+        await inputSource();
+    }
+} catch (err) {
+    loggerError("❌ Fatal error");
+    if (err instanceof Error) {
+        console.error(err.message); // Show actual error in dev
+    }
+    process.exitCode = 1;
 }
