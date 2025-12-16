@@ -14,13 +14,19 @@ Small tool to compress and resize images for the web. Right now only works inter
 - Add progress reporting or batch completion feedback
 
 ### TODO
-- [ ] Add proper input validation with user-friendly error messages
-- [ ] Handle empty directories gracefully
-- [ ] Optionally allow resizing by percentage
-- [ ] Add support for additional image formats (e.g., `.gif`, `.bmp`)
-- [ ] Optionally allow specifying a custom output directory
-- [ ] Improve logging for unsupported files (avoid per-file noise)
-- [ ] Handle large directories efficiently (e.g., concurrency control)
-- [ ] Add CLI flags for width, quality, and output path
-- [ ] Add unit tests for file filtering and compression logic
-- [ ] Make it an ACTUAL CLI tool
+- [x] Add proper input validation with user-friendly error messages
+- [x] Handle empty directories gracefully
+- [] Optionally allow resizing by percentage
+- [] Add support for additional image formats (e.g., `.gif`, `.bmp`)
+- [] Optionally allow specifying a custom output directory
+- [x] Improve logging for unsupported files (avoid per-file noise)
+- [] Handle large directories efficiently (e.g., concurrency control)
+- [] Add CLI flags for width, quality, and output path
+- [] Add unit tests for file filtering and compression logic
+- [] Make it an ACTUAL CLI tool
+
+
+What does it need ? 
+> comp-cli <path-dir>  <path-output?> <--width> <--quality>
+>
+> 

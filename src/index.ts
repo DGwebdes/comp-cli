@@ -4,7 +4,6 @@ import path from "node:path";
 import fs from "fs";
 import readline from "readline";
 import sharp from "sharp";
-import chalk from "chalk";
 import { createSpinner } from "nanospinner";
 import { validateSourceDir } from "./validation.js";
 import { EXTENSIONS, howToUse, welcome } from "./info.js";
@@ -14,11 +13,20 @@ const rl = readline.createInterface({
     input: process.stdin,
     output: process.stdout,
 });
-const spinner = createSpinner("Compressing");
+const spinner = createSpinner("Compressing files");
+const args = process.argv.slice(2);
+const QUALITY = 80;
+const WIDTH = 1080;
 const OUTPUT: string = "./output";
+type Tquality = "-q" | "--quality";
+type Twidth = "-w" | "--width";
+type Toutput = "-o" | "--output";
+type Thelp = "-h" | "--help";
+
+console.log(args);
 
 async function inputSource() {
-    rl.question("Source of Images\n ", (inputDir) => {
+    rl.question("Source of Images\n > ", (inputDir) => {
         const validation = validateSourceDir(inputDir, EXTENSIONS);
 
         if (!validation.isValid) {
@@ -31,7 +39,6 @@ async function inputSource() {
             loggerSuccess(`✅ ${validation.error}`);
         }
         const input = path.resolve(process.cwd(), inputDir.trim());
-        console.log(chalk.red(input));
         compressImages(input);
     });
 }
@@ -44,18 +51,26 @@ async function compressImages(argInput: string) {
             fs.mkdirSync(OUTPUT);
         }
         spinner.start();
-        const jobs = files.map((file) => {
-            const filename = file;
-            const { name, ext } = path.parse(filename);
+        let completed = 0;
+        const TOTAL = files.length;
+        const jobs = files
+            .filter((file) =>
+                EXTENSIONS.includes(path.extname(file).toLowerCase())
+            )
+            .map((file) => {
+                const filename = file;
+                const { name, ext } = path.parse(filename);
+                completed++;
+                spinner.update({ text: `Compressing ${completed}/${TOTAL}` });
 
-            // Compresses images and converts to webp
-            const image = sharp(path.join(argInput, filename));
+                // Compresses images and converts to webp
+                const image = sharp(path.join(argInput, filename));
 
-            return image
-                .resize({ width: 1080 })
-                .toFormat("webp", { quality: 80 })
-                .toFile(path.join(OUTPUT, `${name}.webp`));
-        });
+                return image
+                    .resize({ width: WIDTH })
+                    .toFormat("webp", { quality: QUALITY })
+                    .toFile(path.join(OUTPUT, `${name}.webp`));
+            });
 
         await Promise.all(jobs);
         spinner.success();
@@ -69,6 +84,8 @@ async function compressImages(argInput: string) {
     }
     // Returns compressed images to either the directory destination indicated on the output argument or the same input directory if no output is given
 }
+
+
 
 console.clear();
 welcome();

@@ -16,9 +16,13 @@ function welcome() {
 
 function howToUse() {
     const howTo = chalk.green(`
-        Usage > ./directory_path
-        Comp-cli will always compress the images from your project public directory 
+        About comp-cli tool:
+        Comp-cli will always compress the images all images from the provided directory to the given dimensions and quality value.
+        comp-cli takes only a few selection of images extensions.
         Comp-cli outputs its results to 'output/' directory on your project root
+        How to use comp-cli:
+        > comp-cli <path-dir> <output-path[-o]> <--width[-w]> <--quality [-q]>
+         output path, width and quality are optional, if not provided they default to <./output>, <1080> and <80> respectively.
         ${ACCEPTED_FORMATS}
         \n
         ${NOTE}
