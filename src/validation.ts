@@ -1,5 +1,6 @@
 import fs from "fs";
 import path from "path";
+import { loggerError } from "./logger.js";
 
 /**
  * *Validation result types
@@ -148,10 +149,44 @@ function validateSourceDir(
     return filesValidation;
 }
 
+function getArgValue(
+    args: string[],
+    flags: string[],
+    defaultValue: number
+): number {
+    for (const flag of flags) {
+        const index = args.indexOf(flag);
+        if (index !== -1 && index + 1 < args.length) {
+            const value = parseInt(args[index + 1]!);
+            if (isNaN(value)) {
+                loggerError(`❌ Invalid value for ${flag}: must be a number`);
+                process.exit(1);
+            }
+            return value;
+        }
+    }
+    return defaultValue;
+}
+function getOutputDir(
+    args: string[],
+    flags: string[],
+    defaultValue: string
+): string {
+    for (const flag of flags) {
+        const index = args.indexOf(flag);
+        if (index !== -1 && index + 1 < args.length) {
+            return args[index + 1]!;
+        }
+    }
+    return defaultValue;
+}
+
 export {
     validateInput,
     validatePath,
     validateImageFiles,
     validateSourceDir,
     type ValidationResult,
+    getArgValue,
+    getOutputDir,
 };

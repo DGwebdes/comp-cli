@@ -16,13 +16,20 @@ function welcome() {
 
 function howToUse() {
     const howTo = chalk.green(`
+        How to use comp-cli:
+        > comp-cli <path-dir> [--options]
+        i.e: comp-cli ./public -w 1200 -q 75 -o ./public/compressed
+
         About comp-cli tool:
         Comp-cli will always compress the images all images from the provided directory to the given dimensions and quality value.
         comp-cli takes only a few selection of images extensions.
         Comp-cli outputs its results to 'output/' directory on your project root
-        How to use comp-cli:
-        > comp-cli <path-dir> <output-path[-o]> <--width[-w]> <--quality [-q]>
-         output path, width and quality are optional, if not provided they default to <./output>, <1080> and <80> respectively.
+        
+        -h --help       Information and manual
+        -o --output     Output directory where images are saved
+        -w --width      Width dimensions to be resized to
+        -q --quality    Lossless compression threshold
+        
         ${ACCEPTED_FORMATS}
         \n
         ${NOTE}

@@ -5,7 +5,7 @@ import fs from "fs";
 import readline from "readline";
 import sharp from "sharp";
 import { createSpinner } from "nanospinner";
-import { validateSourceDir } from "./validation.js";
+import { getArgValue, getOutputDir, validateSourceDir } from "./validation.js";
 import { EXTENSIONS, howToUse, welcome } from "./info.js";
 import { loggerError, loggerSuccess } from "./logger.js";
 
@@ -15,79 +15,146 @@ const rl = readline.createInterface({
 });
 const spinner = createSpinner("Compressing files");
 const args = process.argv.slice(2);
-const QUALITY = 80;
-const WIDTH = 1080;
-const OUTPUT: string = "./output";
-type Tquality = "-q" | "--quality";
-type Twidth = "-w" | "--width";
-type Toutput = "-o" | "--output";
-type Thelp = "-h" | "--help";
+const QUALITY_DEFAULT = 80;
+const WIDTH_DEFAULT = 1080;
+const OUTPUT_DEFAULT = "./output";
 
-console.log(args);
+interface CompressConfig {
+    input: string;
+    output?: string;
+    width?: number;
+    quality?: number;
+}
 
-async function inputSource() {
-    rl.question("Source of Images\n > ", (inputDir) => {
-        const validation = validateSourceDir(inputDir, EXTENSIONS);
+/**
+ * *Initiates the application looking for parameters
+ */
+function init() {
+    if (args.includes("-h") || args.includes("--help")) {
+        welcome();
+        howToUse();
+        process.exit(0);
+    }
 
-        if (!validation.isValid) {
-            loggerError(`❌ ${validation.error}`);
+    const config: CompressConfig = {
+        input: args[0] || "",
+        quality: getArgValue(args, ["-q", "--quality"], 80),
+        width: getArgValue(args, ["-w", "--width"], 1080),
+        output: getOutputDir(args, ["-o", "--output"], OUTPUT_DEFAULT),
+    };
+
+    if (!config.input || config.input.startsWith("-")) {
+        loggerError(`❌ Usage: comp-cli <input-dir> [options]`);
+        process.exit(1);
+    }
+
+    start(config);
+}
+
+/**
+ * *Does the image processing after validation on source directory input
+ * @param SourceDirectory
+ * @returns
+ */
+function start(config: CompressConfig) {
+    const validation = validateSourceDir(config.input, EXTENSIONS);
+
+    if (!validation.isValid) {
+        loggerError(`❌ ${validation.error}`);
+        rl.close();
+        return;
+    }
+
+    if (validation.error) {
+        loggerSuccess(`✅ ${validation.error}`);
+    }
+    const input = path.resolve(process.cwd(), config.input.trim());
+    compressImages({ ...config, input })
+        .catch((err) => {
+            process.exit(1);
+        })
+        .finally(() => {
             rl.close();
-            return;
-        }
+        });
+}
 
-        if (validation.error) {
-            loggerSuccess(`✅ ${validation.error}`);
-        }
-        const input = path.resolve(process.cwd(), inputDir.trim());
-        compressImages(input);
+/**
+ * *Interactive Mode, only takes the source directory and defaults the other values
+ */
+async function inputSource() {
+    welcome();
+    howToUse();
+    rl.question("Source of Images\n > ", (inputDir) => {
+        start({ input: inputDir });
     });
 }
 
-async function compressImages(argInput: string) {
+/**
+ * ! If output directory does not exist it will create ./output
+ * * Compresses all the images within the provided directory
+ * @param ImagesToBeCompressedSource
+ */
+async function compressImages(config: CompressConfig) {
     // Takes the images from the directory indicated in the first argument
     try {
-        let files = fs.readdirSync(`${argInput}`);
-        if (!fs.existsSync(OUTPUT)) {
-            fs.mkdirSync(OUTPUT);
+        let files = fs.readdirSync(`${config.input}`);
+        let dirOutput = config.output ? config.output : OUTPUT_DEFAULT;
+        let width = config.width ? config.width : WIDTH_DEFAULT;
+        let quality = config.quality ? config.quality : QUALITY_DEFAULT;
+        //Create output directory is doesn't exist
+        if (!fs.existsSync(dirOutput)) {
+            fs.mkdirSync(dirOutput);
         }
         spinner.start();
         let completed = 0;
-        const TOTAL = files.length;
+        const TOTAL = files.filter((file) =>
+            EXTENSIONS.includes(path.extname(file).toLocaleLowerCase())
+        ).length;
         const jobs = files
             .filter((file) =>
                 EXTENSIONS.includes(path.extname(file).toLowerCase())
             )
             .map((file) => {
-                const filename = file;
-                const { name, ext } = path.parse(filename);
+                const { name, ext } = path.parse(file);
                 completed++;
                 spinner.update({ text: `Compressing ${completed}/${TOTAL}` });
 
-                // Compresses images and converts to webp
-                const image = sharp(path.join(argInput, filename));
+                const image = sharp(path.join(config.input, file));
 
                 return image
-                    .resize({ width: WIDTH })
-                    .toFormat("webp", { quality: QUALITY })
-                    .toFile(path.join(OUTPUT, `${name}.webp`));
+                    .resize({ width: width })
+                    .toFormat("webp", { quality: quality })
+                    .toFile(path.join(dirOutput, `${name}.webp`));
             });
 
         await Promise.all(jobs);
         spinner.success();
-        loggerSuccess(`Files Compressed`);
+        loggerSuccess(`✅ Compressed ${TOTAL} images`);
+        console.log(`   Input:   ${config.input}`);
+        console.log(`   Output:  ${dirOutput}`);
+        console.log(`   Quality: ${quality}%`);
+        console.log(`   Width:   ${width}px`);
     } catch (error) {
         spinner.error();
-        loggerError(`Sorry, something went wrong ${error}`);
-        process.exit(1);
-    } finally {
-        rl.close();
+        if (error instanceof Error) {
+            if (error.message.includes("ENOENT")) {
+                loggerError(`❌ File not found or inaccessible`);
+            } else if (error.message.includes("EACCES")) {
+                loggerError(`❌ Permission denied`);
+            } else {
+                loggerError(`❌ ${error.message}`);
+            }
+        }
+        throw error;
     }
-    // Returns compressed images to either the directory destination indicated on the output argument or the same input directory if no output is given
 }
 
-
-
+/**
+ * *Initiates the program, if not params are provided it enter Interactive Mode
+ */
 console.clear();
-welcome();
-howToUse();
-await inputSource();
+if (args.length !== 0) {
+    init();
+} else {
+    await inputSource();
+}

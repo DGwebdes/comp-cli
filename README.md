@@ -1,32 +1,134 @@
-# Experimental CLI Tool
+# comp-cli
 
-## Converts Images to WEBP
+A fast CLI tool for batch compressing and converting images to WebP format.
 
-Small tool to compress and resize images for the web. Right now only works interactively. 
+## Features
 
-### Functionalities Implemented
-- Takes a single parameter: the source directory path
-- Only accepts images with extensions `.jpeg`, `.jpg`, and `.png`
-- Validates that the path exists
-- Validates that the path is a directory
-- Compresses only the images inside the provided directory
-- Outputs all compressed images to `./output`
-- Add progress reporting or batch completion feedback
+- ✅ Converts JPEG, JPG, and PNG images to WebP
+- ✅ Automatic compression and resizing
+- ✅ Interactive and command-line modes
+- ✅ Configurable quality and dimensions
+- ✅ Custom output directory support
+- ✅ Progress tracking during compression
+- ✅ Comprehensive input validation
 
-### TODO
-- [x] Add proper input validation with user-friendly error messages
-- [x] Handle empty directories gracefully
-- [] Optionally allow resizing by percentage
-- [] Add support for additional image formats (e.g., `.gif`, `.bmp`)
-- [] Optionally allow specifying a custom output directory
-- [x] Improve logging for unsupported files (avoid per-file noise)
-- [] Handle large directories efficiently (e.g., concurrency control)
-- [] Add CLI flags for width, quality, and output path
-- [] Add unit tests for file filtering and compression logic
-- [] Make it an ACTUAL CLI tool
+## Installation
 
+### Global Installation
+```bash
+npm install -g compressor-cli
+```
 
-What does it need ? 
-> comp-cli <path-dir>  <path-output?> <--width> <--quality>
->
-> 
+### Development
+```bash
+git clone <your-repo>
+cd compressor-cli
+npm install
+npm run build
+npm link
+```
+
+## Usage
+
+### Command Line Mode
+```bash
+comp-cli <input-directory> [options]
+```
+
+**Example:**
+```bash
+# Basic usage (default: quality 80, width 1080px, output ./output)
+comp-cli ./images
+
+# Custom quality and width
+comp-cli ./images -q 90 -w 1920
+
+# Custom output directory
+comp-cli ./images -o ./compressed
+
+# All options combined
+comp-cli ./images -q 70 -w 800 -o ./dist/images
+```
+
+### Interactive Mode
+If no arguments are provided, comp-cli starts in interactive mode:
+```bash
+comp-cli
+# Follow the prompts to enter your source directory
+```
+
+## Options
+
+| Flag | Long Form | Description | Default |
+|------|-----------|-------------|---------|
+| `-q` | `--quality` | WebP quality (1-100) | 80 |
+| `-w` | `--width` | Target width in pixels | 1080 |
+| `-o` | `--output` | Output directory path | ./output |
+| `-h` | `--help` | Show help information | - |
+
+## Supported Formats
+
+**Input:** `.jpeg`, `.jpg`, `.png`  
+**Output:** `.webp`
+
+## How It Works
+
+1. Validates the input directory exists and contains supported images
+2. Creates the output directory if it doesn't exist
+3. Compresses each image to WebP format with specified settings
+4. Resizes images to the target width (maintains aspect ratio)
+5. Reports progress and completion status
+
+## Examples
+
+### Compress for web thumbnails
+```bash
+comp-cli ./photos -w 400 -q 70 -o ./thumbnails
+```
+
+### High-quality conversion
+```bash
+comp-cli ./originals -q 95 -w 2560 -o ./webp
+```
+
+### Quick compression with defaults
+```bash
+comp-cli ./images
+```
+
+## Development
+
+### Scripts
+```bash
+npm run dev        # Run with tsx (development)
+npm run build      # Compile TypeScript
+npm run link       # Build and link globally
+npm run unlink     # Unlink from global
+```
+
+### Project Structure
+```
+src/
+├── index.ts        # Main entry point
+├── validation.ts   # Input validation and argument parsing
+├── logger.ts       # Logging utilities
+└── info.ts         # Help text and constants
+```
+
+## Roadmap
+
+- [ ] Add support for additional formats (GIF, BMP, TIFF)
+- [ ] Implement percentage-based resizing
+- [ ] Add concurrency control for large batches
+- [ ] Support for multiple output formats
+- [ ] Dry-run mode to preview operations
+- [ ] Configuration file support
+- [ ] Unit tests
+
+## License
+
+ISC
+
+## Author
+
+dielan
