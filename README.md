@@ -68,6 +68,7 @@ All other values fallback to default values. See below.
 | `-w` | `--width` | Target width in pixels | 1080 |
 | `-o` | `--output` | Output directory path | ./output |
 | `-h` | `--help` | Show help information | - |
+| `-v` | `--version` | Show current version | - |
 
 ## Supported Formats
 
@@ -116,6 +117,8 @@ src/
 ├── validation.ts   # Input validation and argument parsing
 ├── logger.ts       # Logging utilities
 └── info.ts         # Help text and constants
+tests/
+└── compression.tests.ts    # Vitest testing
 ```
 
 ## Roadmap

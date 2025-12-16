@@ -1,5 +1,14 @@
 import chalk from "chalk";
+import { readFileSync } from "fs";
+import { fileURLToPath } from "url";
+import { dirname, join } from "path";
 
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const pkg = JSON.parse(
+    readFileSync(join(__dirname, "../package.json"), "utf-8")
+);
+
+const VERSION = pkg.version ? pkg.version : "";
 const EXTENSIONS = [".jpeg", ".jpg", ".png"];
 const ACCEPTED_FORMATS = chalk.bgGray(`Accepted formats: JPEG, JPG, PNG`);
 const WELCOME_MESSAGE = chalk.italic(
@@ -37,4 +46,4 @@ function howToUse() {
     console.log(howTo);
 }
 
-export { EXTENSIONS, welcome, howToUse };
+export { EXTENSIONS, welcome, howToUse, VERSION };

@@ -6,7 +6,7 @@ import readline from "readline";
 import sharp from "sharp";
 import { createSpinner } from "nanospinner";
 import { getArgValue, getOutputDir, validateSourceDir } from "./validation.js";
-import { EXTENSIONS, howToUse, welcome } from "./info.js";
+import { EXTENSIONS, howToUse, VERSION, welcome } from "./info.js";
 import { loggerError, loggerSuccess } from "./logger.js";
 
 const rl = readline.createInterface({
@@ -19,7 +19,7 @@ const QUALITY_DEFAULT = 80;
 const WIDTH_DEFAULT = 1080;
 const OUTPUT_DEFAULT = "./output";
 
-type InitResult = "ok" | "help" | "error";
+type InitResult = "ok" | "help" | "error" | "version";
 
 interface CompressConfig {
     input: string;
@@ -36,6 +36,10 @@ export async function init(): Promise<InitResult> {
         welcome();
         howToUse();
         return "help";
+    }
+    if (args.includes("-v") || args.includes("--version")) {
+        console.log(VERSION);
+        return "version";
     }
 
     const config: CompressConfig = {
@@ -162,6 +166,8 @@ try {
         if (result === "error") {
             process.exitCode = 1;
         } else if (result === "help") {
+            process.exitCode = 0; // Success for help
+        } else if (result === "version") {
             process.exitCode = 0; // Success for help
         }
     } else {
