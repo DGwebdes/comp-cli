@@ -9,41 +9,45 @@ const pkg = JSON.parse(
 );
 
 const VERSION = pkg.version ? pkg.version : "";
-const EXTENSIONS = [".jpeg", ".jpg", ".png"];
-const ACCEPTED_FORMATS = chalk.bgGray(`Accepted formats: JPEG, JPG, PNG`);
+const EXTENSIONS = [".jpeg", ".jpg", ".png", ".avif", ".webp"];
+
+const ACCEPTED_FORMATS = chalk.bgGray(
+    `Accepted formats: JPEG, JPG, PNG, AVIF, WEBP`
+);
 const WELCOME_MESSAGE = chalk.italic(
     `\n\nImage.* to Image.webp Compressor. \n`
 );
 const NOTE = chalk.red.italic(
-    `If output source does't exist. comp-cli creates one.`
+    `If output source does't exist. comp-cli creates one relative to where comp-cli was executed from.`
 );
 
 function welcome() {
     const intro = chalk.blue.bold(WELCOME_MESSAGE);
-    console.log(intro);
+    process.stdout.write(intro);
 }
-
 function howToUse() {
     const howTo = chalk.green(`
-        How to use comp-cli:
+        How to use:
         > comp-cli <path-dir> [--options]
-        i.e: comp-cli ./public -w 1200 -q 75 -o ./public/compressed
+        > comp-cli ./public -w 1200 -q 75 -f "webp" -o ./public/compressed
 
         About comp-cli tool:
-        Comp-cli will always compress all the images from the provided directory to the given dimensions and quality value.
+        Comp-cli will always compress all images from the provided directory.
         comp-cli takes only a few selection of images extensions.
-        Comp-cli outputs its results to 'output/' directory on your project root
         
-        -h --help       Information and manual
+        -h --help       Shows this help
         -o --output     Output directory where images are saved
         -w --width      Width dimensions to be resized to
         -q --quality    Lossless compression threshold
+        -f --format     Format output type [png, webp, jpg]
+        -v --version    Shows version
         
         ${ACCEPTED_FORMATS}
         \n
         ${NOTE}
         `);
-    console.log(howTo);
+
+    process.stdout.write(howTo);
 }
 
 export { EXTENSIONS, welcome, howToUse, VERSION };

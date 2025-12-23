@@ -1,14 +1,7 @@
 import fs from "fs";
 import path from "path";
 import { loggerError } from "./logger.js";
-
-/**
- * *Validation result types
- */
-interface ValidationResult {
-    isValid: boolean;
-    error?: string;
-}
+import type { outputFormat, ValidationResult } from "./types.js";
 
 function validateInput(input: string): ValidationResult {
     const trimmed = input.trim();
@@ -167,6 +160,31 @@ function getArgValue(
     }
     return defaultValue;
 }
+
+function validateOutputDir(outputDir: string): ValidationResult {
+    const inputValidation = validateInput(outputDir);
+    if (!inputValidation.isValid) {
+        return inputValidation;
+    }
+
+    if (fs.existsSync(outputDir)) {
+        if (!fs.statSync(outputDir).isDirectory()) {
+            return { isValid: false, error: "Output is not a directory" };
+        }
+        try {
+            fs.accessSync(outputDir, fs.constants.W_OK);
+        } catch (error) {
+            return {
+                isValid: false,
+                error: "Output directory is not writable",
+            };
+        }
+    }
+    return {
+        isValid: true,
+    };
+}
+
 function getOutputDir(
     args: string[],
     flags: string[],
@@ -175,7 +193,43 @@ function getOutputDir(
     for (const flag of flags) {
         const index = args.indexOf(flag);
         if (index !== -1 && index + 1 < args.length) {
-            return args[index + 1]!;
+            const outputArgs = args[index + 1]!;
+
+            const validation = validateOutputDir(outputArgs);
+            if (!validation.isValid) {
+                loggerError(`❌ ${validation.error}`);
+                throw new Error();
+            }
+
+            return outputArgs;
+        }
+    }
+
+    return defaultValue;
+}
+
+function getFormat(
+    args: string[],
+    flags: string[],
+    defaultValue: outputFormat
+): outputFormat {
+    const validFormat: outputFormat[] = ["webp", "jpeg", "avif", "png"];
+
+    for (const flag of flags) {
+        const index = args.indexOf(flag);
+        if (index !== -1 && index + 1 < args.length) {
+            const useFormat = args[index + 1]?.toLowerCase();
+
+            if (!validFormat.includes(useFormat as outputFormat)) {
+                loggerError(
+                    `❌ Invalid format: ${useFormat}. Supported: ${validFormat.join(
+                        ", "
+                    )}`
+                );
+                process.exit(1);
+            }
+
+            return useFormat as outputFormat;
         }
     }
     return defaultValue;
@@ -189,4 +243,5 @@ export {
     type ValidationResult,
     getArgValue,
     getOutputDir,
+    getFormat,
 };

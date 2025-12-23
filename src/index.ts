@@ -2,64 +2,58 @@
 
 import path from "node:path";
 import fs from "fs";
-import readline from "readline";
+
 import sharp from "sharp";
 import { createSpinner } from "nanospinner";
-import { getArgValue, getOutputDir, validateSourceDir } from "./validation.js";
+import {
+    getArgValue,
+    getFormat,
+    getOutputDir,
+    validateSourceDir,
+} from "./validation.js";
 import { EXTENSIONS, howToUse, VERSION, welcome } from "./info.js";
 import { loggerError, loggerSuccess } from "./logger.js";
+import type { CompressConfig } from "./types.js";
 
-const rl = readline.createInterface({
-    input: process.stdin,
-    output: process.stdout,
-});
 const spinner = createSpinner("Compressing files");
 const args = process.argv.slice(2);
 const QUALITY_DEFAULT = 80;
 const WIDTH_DEFAULT = 1080;
+const OUTPUT_FORMAT_DEFAULT = "webp";
 const OUTPUT_DEFAULT = "./output";
-
-type InitResult = "ok" | "help" | "error" | "version";
-
-interface CompressConfig {
-    input: string;
-    output?: string;
-    width?: number;
-    quality?: number;
-}
 
 /**
  * *Initiates the application looking for parameters
  */
-export async function init(): Promise<InitResult> {
+export async function init(): Promise<void> {
     if (args.includes("-h") || args.includes("--help")) {
         welcome();
         howToUse();
-        return "help";
+        process.exit(0);
     }
     if (args.includes("-v") || args.includes("--version")) {
         console.log(VERSION);
-        return "version";
+        process.exit(0);
     }
 
     const config: CompressConfig = {
         input: args[0] || "",
         quality: getArgValue(args, ["-q", "--quality"], 80),
         width: getArgValue(args, ["-w", "--width"], 1080),
+        format: getFormat(args, ["f", "--format"], OUTPUT_FORMAT_DEFAULT),
         output: getOutputDir(args, ["-o", "--output"], OUTPUT_DEFAULT),
     };
 
     if (!config.input || config.input.startsWith("-")) {
         loggerError(`❌ Usage: comp-cli <input-dir> [options]`);
-        return "error";
+        process.exit(1);
     }
 
     await start(config);
-    return "ok";
 }
 
 /**
- * *Does the image processing after validation on source directory input
+ * *Validates Inputs and calls compressor function
  * @param SourceDirectory
  * @returns
  */
@@ -68,33 +62,15 @@ async function start(config: CompressConfig) {
 
     if (!validation.isValid) {
         loggerError(`❌ ${validation.error}`);
-        rl.close();
-        throw new Error(validation.error);
+        process.exit(1);
     }
 
     if (validation.error) {
         loggerSuccess(`✅ ${validation.error}`);
     }
     const input = path.resolve(process.cwd(), config.input.trim());
-    await compressImages({ ...config, input })
-        .catch((err) => {
-            throw err;
-        })
-        .finally(() => {
-            rl.close();
-        });
-}
-
-/**
- * *Interactive Mode, only takes the source directory and defaults the other values
- */
-async function inputSource() {
-    welcome();
-    howToUse();
-    rl.question("Source of Images\n > ", (inputDir: string) => {
-        start({ input: inputDir }).catch(() => {
-            process.exitCode = 1;
-        });
+    await compressImages({ ...config, input }).catch((err) => {
+        throw err;
     });
 }
 
@@ -109,9 +85,17 @@ export async function compressImages(config: CompressConfig) {
         let dirOutput = config.output ? config.output : OUTPUT_DEFAULT;
         let width = config.width ? config.width : WIDTH_DEFAULT;
         let quality = config.quality ? config.quality : QUALITY_DEFAULT;
+        let outputFormat = config.format
+            ? config.format
+            : OUTPUT_FORMAT_DEFAULT;
         //Create output directory is doesn't exist
         if (!fs.existsSync(dirOutput)) {
-            fs.mkdirSync(dirOutput);
+            try {
+                fs.mkdirSync(dirOutput);
+            } catch (error) {
+                loggerError(`❌ Cannot create output directory: ${dirOutput}`);
+                throw error;
+            }
         }
         const filtered = files.filter((file) =>
             EXTENSIONS.includes(path.extname(file).toLowerCase())
@@ -119,14 +103,14 @@ export async function compressImages(config: CompressConfig) {
         spinner.start();
         let completed = 0;
         const TOTAL = filtered.length;
-        const jobs = filtered.map((file) => {
+        const jobs = filtered.map(async (file) => {
             const { name } = path.parse(file);
             const image = sharp(path.join(config.input, file));
 
             return image
                 .resize({ width: width })
-                .toFormat("webp", { quality: quality })
-                .toFile(path.join(dirOutput, `${name}.webp`))
+                .toFormat(OUTPUT_FORMAT_DEFAULT, { quality: quality })
+                .toFile(path.join(dirOutput, `${name}.${outputFormat}`))
                 .then(() => {
                     completed++;
                     spinner.update({
@@ -158,25 +142,14 @@ export async function compressImages(config: CompressConfig) {
 }
 
 /**
- * *Initiates the program, if not params are provided it enter Interactive Mode
+ * *Initiates the program
  */
 try {
-    if (args.length !== 0) {
-        const result = await init();
-        if (result === "error") {
-            process.exitCode = 1;
-        } else if (result === "help") {
-            process.exitCode = 0; // Success for help
-        } else if (result === "version") {
-            process.exitCode = 0; // Success for help
-        }
-    } else {
-        await inputSource();
-    }
+    await init();
 } catch (err) {
     loggerError("❌ Fatal error");
     if (err instanceof Error) {
-        console.error(err.message); // Show actual error in dev
+        console.error(err.message);
     }
     process.exitCode = 1;
 }
