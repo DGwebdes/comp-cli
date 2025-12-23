@@ -39,7 +39,7 @@ export async function init(): Promise<void> {
         input: args[0] || "",
         quality: getArgValue(args, ["-q", "--quality"], 80),
         width: getArgValue(args, ["-w", "--width"], 1080),
-        format: getFormat(args, ["f", "--format"], OUTPUT_FORMAT_DEFAULT),
+        format: getFormat(args, ["-f", "--format"], OUTPUT_FORMAT_DEFAULT),
         output: getOutputDir(args, ["-o", "--output"], OUTPUT_DEFAULT),
     };
 
