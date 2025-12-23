@@ -2,7 +2,6 @@
 
 import path from "node:path";
 import fs from "fs";
-
 import sharp from "sharp";
 import { createSpinner } from "nanospinner";
 import {

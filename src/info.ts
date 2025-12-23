@@ -29,7 +29,6 @@ function howToUse() {
     const howTo = chalk.green(`
         How to use:
         > comp-cli <path-dir> [--options]
-        > comp-cli ./public -w 1200 -q 75 -f "webp" -o ./public/compressed
 
         About comp-cli tool:
         Comp-cli will always compress all images from the provided directory.
@@ -41,6 +40,12 @@ function howToUse() {
         -q --quality    Lossless compression threshold
         -f --format     Format output type [png, webp, jpg]
         -v --version    Shows version
+
+        Examples:
+        comp-cli ./images
+        comp-cli ./images -q 90 -w 1920
+        comp-cli ./images -f jpeg -q 85
+        comp-cli ./images -o ./compressed -f avif
         
         ${ACCEPTED_FORMATS}
         \n
